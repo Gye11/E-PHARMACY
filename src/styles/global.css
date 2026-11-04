@@ -1,0 +1,47 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  background: #f4f6f5;
+  color: #1a1a1a;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.client-goods-thumb {
+  border-radius: 12px;
+  object-fit: contain;
+  background: #f0f0f0;
+}
+
+.product-thumbnail {
+  border: 1px solid #e8ecea;
+  border-radius: 12px;
+  object-fit: contain;
+  background: #f6f8f7;
+}
+
+a {
+  color: inherit;
+}
+
+.route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #59b17a;
+  font-weight: 600;
+}

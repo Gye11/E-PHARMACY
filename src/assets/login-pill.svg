@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 160" fill="none">
+  <ellipse cx="140" cy="88" rx="62" ry="59" fill="#B8BAC1" opacity=".55" transform="rotate(24 140 88)"/>
+  <g transform="rotate(24 140 78)">
+    <ellipse cx="140" cy="78" rx="62" ry="59" fill="url(#pillShade)" stroke="#E5E7EB" stroke-width="2"/>
+    <path d="M78 78h124" stroke="#BFC1C8" stroke-width="2"/>
+    <path d="M79 81h122" stroke="#FFF" stroke-width="1" opacity=".8"/>
+  </g>
+  <defs>
+    <linearGradient id="pillShade" x1="105" y1="25" x2="179" y2="132" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5F6FA"/>
+      <stop offset=".68" stop-color="#E6E7ED"/>
+      <stop offset="1" stop-color="#CFD0D5"/>
+    </linearGradient>
+  </defs>
+</svg>

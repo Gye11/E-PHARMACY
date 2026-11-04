@@ -1,0 +1,21 @@
+.shared-layout {
+  min-height: 100vh;
+  background: #f4f6f5;
+}
+
+.shared-layout__body {
+  display: flex;
+  min-height: calc(100vh - 72px);
+}
+
+.shared-layout__main {
+  flex: 1;
+  padding: 20px clamp(16px, 3vw, 40px) 40px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.shared-layout__main {
+  min-width: 0;
+}

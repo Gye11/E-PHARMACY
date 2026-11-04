@@ -1,0 +1,17 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo__text {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.logo img {
+  object-fit: contain;
+  border-radius: 6px;
+}

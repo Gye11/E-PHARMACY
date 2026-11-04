@@ -1,0 +1,232 @@
+import type {
+  Customer,
+  Order,
+  Product,
+  Supplier,
+  Transaction,
+} from '../types';
+import { MEDICINE_IMAGES } from './productImages';
+
+export const initialProducts: Product[] = [
+  {
+    id: 'p1',
+    name: 'Vitamin C Medicine',
+    category: 'Vitamins & Supplements',
+    stock: 240,
+    suppliers: 'BioHealth Co.',
+    price: 90,
+    image: MEDICINE_IMAGES[17].src,
+    createdAt: '2026-03-10',
+  },
+  {
+    id: 'p2',
+    name: 'Hydrochloride',
+    category: 'Medicine',
+    stock: 85,
+    suppliers: 'MedLine Ltd.',
+    price: 582,
+    image: MEDICINE_IMAGES[2].src,
+    createdAt: '2026-03-08',
+  },
+  {
+    id: 'p3',
+    name: 'Prednisone',
+    category: 'Medicine',
+    stock: 120,
+    suppliers: 'PharmaCore',
+    price: 420,
+    image: MEDICINE_IMAGES[4].src,
+    createdAt: '2026-03-05',
+  },
+  {
+    id: 'p4',
+    name: 'Baby Care Lotion',
+    category: 'Baby Care',
+    stock: 64,
+    suppliers: 'SoftSkin Inc.',
+    price: 35,
+    image: MEDICINE_IMAGES[16].src,
+    createdAt: '2026-02-28',
+  },
+];
+
+export const initialOrders: Order[] = [
+  {
+    id: 'o1',
+    userName: 'Alex Shatov',
+    userEmail: 'alexshatov@gmail.com',
+    address: 'Krakowie 148, Warsaw',
+    products: 'Vitamin C, Prednisone',
+    orderDate: '2026-03-12',
+    price: 510,
+    status: 'Delivered',
+  },
+  {
+    id: 'o2',
+    userName: 'Philip Harbach',
+    userEmail: 'philip.h@gmail.com',
+    address: 'Berlin Str. 22',
+    products: 'Hydrochloride',
+    orderDate: '2026-03-11',
+    price: 582,
+    status: 'Processing',
+  },
+  {
+    id: 'o3',
+    userName: 'Mirko Frak',
+    userEmail: 'mirko.frak@mail.com',
+    address: 'Via Roma 5, Milan',
+    products: 'Baby Care Lotion x2',
+    orderDate: '2026-03-09',
+    price: 70,
+    status: 'Pending',
+  },
+];
+
+export const initialCustomers: Customer[] = [
+  {
+    id: 'c1',
+    name: 'Alex Shatov',
+    email: 'alexshatov@gmail.com',
+    address: 'Krakowie 148',
+    phone: '+48 585-68-2102',
+    registerDate: '2025-11-02',
+    spent: 2890.66,
+    medicines: [
+      {
+        id: 'm1',
+        name: 'Vitamin C Medicine',
+        description: 'Antioxidant Aid for Heart Health',
+        price: 90,
+        image: MEDICINE_IMAGES[17].src,
+      },
+      {
+        id: 'm2',
+        name: 'Stomach Medicine',
+        description: 'Digestive relief formula',
+        price: 45,
+        image: MEDICINE_IMAGES[7].src,
+      },
+      {
+        id: 'm3',
+        name: 'Antibiotic',
+        description: 'Broad spectrum capsules',
+        price: 120,
+        image: MEDICINE_IMAGES[6].src,
+      },
+    ],
+  },
+  {
+    id: 'c2',
+    name: 'Philip Harbach',
+    email: 'philip.h@gmail.com',
+    address: 'Berlin Str. 22',
+    phone: '+49 170-555-0199',
+    registerDate: '2025-12-18',
+    spent: 1240.5,
+  },
+  {
+    id: 'c3',
+    name: 'Mirko Frak',
+    email: 'mirko.frak@mail.com',
+    address: 'Via Roma 5',
+    phone: '+39 333-221-8899',
+    registerDate: '2026-01-05',
+    spent: 890.2,
+  },
+  {
+    id: 'c4',
+    name: 'Dasha Harmon',
+    email: 'dasha.h@mail.com',
+    address: 'Kretoria 45',
+    phone: '+48 585-08-2102',
+    registerDate: '2026-02-01',
+    spent: 650,
+  },
+  {
+    id: 'c5',
+    name: 'Elena Morris',
+    email: 'elena.m@mail.com',
+    address: 'Oak Street 12',
+    phone: '+1 555-0192',
+    registerDate: '2026-02-14',
+    spent: 420.33,
+  },
+];
+
+export const initialSuppliers: Supplier[] = [
+  {
+    id: 's1',
+    name: 'BioHealth Co.',
+    address: 'Industrial Zone 4',
+    company: 'BioHealth International',
+    deliveryDate: '2026-03-20',
+    amount: 12500,
+    status: 'Active',
+  },
+  {
+    id: 's2',
+    name: 'MedLine Ltd.',
+    address: 'Harbor Road 88',
+    company: 'MedLine Group',
+    deliveryDate: '2026-03-18',
+    amount: 8900,
+    status: 'Pending',
+  },
+  {
+    id: 's3',
+    name: 'PharmaCore',
+    address: 'Science Park 2',
+    company: 'PharmaCore AG',
+    deliveryDate: '2026-03-25',
+    amount: 15200,
+    status: 'Active',
+  },
+];
+
+export const initialTransactions: Transaction[] = [
+  {
+    id: 't1',
+    title: 'Order payment',
+    email: 'alexshatov@gmail.com',
+    amount: 249.88,
+    type: 'income',
+  },
+  {
+    id: 't2',
+    title: 'Supplier invoice',
+    amount: -49.33,
+    type: 'expense',
+  },
+  {
+    id: 't3',
+    title: 'Refund processed',
+    email: 'mirko.frak@mail.com',
+    amount: -49.66,
+    type: 'expense',
+  },
+  {
+    id: 't4',
+    title: 'Daily sales',
+    amount: 263.88,
+    type: 'income',
+  },
+  {
+    id: 't5',
+    title: 'Sync error',
+    amount: 0,
+    type: 'error',
+  },
+];
+
+export const PRODUCT_CATEGORIES = [
+  'Medicine',
+  'Head',
+  'Hand',
+  'Dental Care',
+  'Skin Care',
+  'Eye Care',
+  'Vitamins & Supplements',
+  'Orthopedic Products',
+  'Baby Care',
+] as const;
