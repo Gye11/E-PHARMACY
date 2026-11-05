@@ -3,9 +3,14 @@ import {
   collection,
   deleteDoc,
   doc,
+  endAt,
+  getCountFromServer,
   getDoc,
   getDocs,
   query,
+  limit,
+  orderBy,
+  startAt,
   setDoc,
   where,
 } from "firebase/firestore";
@@ -132,31 +137,43 @@ export async function getStores(): Promise<PharmacyStore[]> {
     }
     return demoStores;
   }
-  const snapshot = await getDocs(collection(firestore, "stores"));
-  return snapshot.docs.length
-    ? snapshot.docs.map(
-        (item) => ({ id: item.id, ...item.data() }) as PharmacyStore,
-      )
-    : demoStores;
+  try {
+    const snapshot = await getDocs(collection(firestore, "stores"));
+    return snapshot.docs.length
+      ? snapshot.docs.map(
+          (item) => ({ id: item.id, ...item.data() }) as PharmacyStore,
+        )
+      : demoStores;
+  } catch {
+    return demoStores;
+  }
 }
 
 export async function getReviews(productId?: string): Promise<StoreReview[]> {
   if (!firestore) return productId ? [] : demoReviews;
-  const snapshot = await getDocs(collection(firestore, "reviews"));
-  const reviews = snapshot.docs.map(
-    (item) => ({ id: item.id, ...item.data() }) as StoreReview,
-  );
-  return (
-    productId
-      ? reviews.filter((review) => review.productId === productId)
-      : reviews
-  ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  try {
+    const snapshot = await getDocs(collection(firestore, "reviews"));
+    const reviews = snapshot.docs.map(
+      (item) => ({ id: item.id, ...item.data() }) as StoreReview,
+    );
+    return (
+      productId
+        ? reviews.filter((review) => review.productId === productId)
+        : reviews
+    ).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch {
+    return productId ? [] : demoReviews;
+  }
 }
 
 export async function getCart(userId?: string): Promise<CartItem[]> {
   if (firestore && userId) {
-    const snapshot = await getDoc(doc(firestore, "carts", userId));
-    return (snapshot.data()?.items as CartItem[] | undefined) ?? [];
+    try {
+      const snapshot = await getDoc(doc(firestore, "carts", userId));
+      return (snapshot.data()?.items as CartItem[] | undefined) ?? [];
+    } catch {
+      // Keep browsing with the locally cached cart if Firestore is temporarily unavailable.
+    }
   }
   try {
     const value: unknown = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]");
@@ -245,16 +262,20 @@ export async function getCustomerOrders(): Promise<Order[]> {
 
 export async function getStorefrontProducts(discount?: number) {
   if (firestore) {
-    const productsRef = collection(firestore, "storeProducts");
-    const snapshot = await getDocs(
-      discount
-        ? query(productsRef, where("discountPercent", ">=", discount))
-        : productsRef,
-    );
-    if (snapshot.docs.length) {
-      return snapshot.docs.map(
-        (item) => ({ id: item.id, ...item.data() }) as StorefrontProduct,
+    try {
+      const productsRef = collection(firestore, "storeProducts");
+      const snapshot = await getDocs(
+        discount
+          ? query(productsRef, where("discountPercent", ">=", discount))
+          : productsRef,
       );
+      if (snapshot.docs.length) {
+        return snapshot.docs.map(
+          (item) => ({ id: item.id, ...item.data() }) as StorefrontProduct,
+        );
+      }
+    } catch {
+      // Use the bundled catalogue until Firestore is reachable/configured.
     }
   }
   const catalog = MEDICINE_CATALOG.map((item, index) => ({
@@ -297,6 +318,69 @@ export interface StorefrontProduct {
   createdAt: string;
 }
 
+export async function getStorefrontPage(options: {
+  search: string;
+  category: string;
+  discount?: number;
+  page: number;
+  pageSize: number;
+}): Promise<{ products: StorefrontProduct[]; total: number }> {
+  if (firestore) {
+    try {
+      const productsRef = collection(firestore, "storeProducts");
+      const filters = [];
+      if (options.discount)
+        filters.push(where("discountPercent", ">=", options.discount));
+      if (options.category !== "All categories")
+        filters.push(where("category", "==", options.category));
+      const term = options.search.trim().toLowerCase();
+      const ordering = term
+        ? [orderBy("searchNameLower"), startAt(term), endAt(`${term}\uf8ff`)]
+        : [orderBy("name")];
+      const count = await getCountFromServer(
+        query(productsRef, ...filters, ...ordering),
+      );
+      const snapshot = await getDocs(
+        query(
+          productsRef,
+          ...filters,
+          ...ordering,
+          limit(options.page * options.pageSize),
+        ),
+      );
+      if (!snapshot.empty || count.data().count > 0) {
+        return {
+          products: snapshot.docs
+            .slice(
+              (options.page - 1) * options.pageSize,
+              options.page * options.pageSize,
+            )
+            .map(
+              (item) => ({ id: item.id, ...item.data() }) as StorefrontProduct,
+            ),
+          total: count.data().count,
+        };
+      }
+    } catch {
+      // Fall back to the local catalogue when Firestore has no matching index/data yet.
+    }
+  }
+  const all = await getStorefrontProducts(options.discount);
+  const matching = all.filter(
+    (product) =>
+      `${product.name} ${product.description}`
+        .toLowerCase()
+        .includes(options.search.trim().toLowerCase()) &&
+      (options.category === "All categories" ||
+        product.category === options.category),
+  );
+  const start = (options.page - 1) * options.pageSize;
+  return {
+    products: matching.slice(start, start + options.pageSize),
+    total: matching.length,
+  };
+}
+
 export async function savePharmacyStore(
   ownerId: string,
   store: Omit<PharmacyStore, "id">,
@@ -308,6 +392,62 @@ export async function savePharmacyStore(
   localStorage.setItem("e_pharmacy_shop", JSON.stringify(store));
 }
 
+export async function getPharmacyStore(
+  ownerId: string,
+): Promise<PharmacyStore | null> {
+  if (!firestore) {
+    const saved = localStorage.getItem("e_pharmacy_shop");
+    if (!saved) return null;
+    try {
+      const details = JSON.parse(saved) as Record<string, string | boolean>;
+      return {
+        id: ownerId,
+        name: String(details.shopName ?? details.name ?? ""),
+        address: String(details.street ?? details.address ?? ""),
+        city: String(details.city ?? ""),
+        phone: String(details.phone ?? ""),
+        isOpen: true,
+        rating: 5,
+        ownerEmail: String(details.email ?? ""),
+      };
+    } catch {
+      return null;
+    }
+  }
+  const snapshot = await getDoc(doc(firestore, "stores", ownerId));
+  return snapshot.exists()
+    ? ({ id: snapshot.id, ...snapshot.data() } as PharmacyStore)
+    : null;
+}
+
+export async function getPublishedProducts(
+  storeId: string,
+): Promise<StorefrontProduct[]> {
+  if (!firestore) {
+    try {
+      const items: unknown = JSON.parse(
+        localStorage.getItem("e_pharmacy_public_products") ?? "[]",
+      );
+      return Array.isArray(items)
+        ? (items as StorefrontProduct[]).filter((item) =>
+            item.id.startsWith(`${storeId}-`),
+          )
+        : [];
+    } catch {
+      return [];
+    }
+  }
+  const snapshot = await getDocs(
+    query(
+      collection(firestore, "storeProducts"),
+      where("storeId", "==", storeId),
+    ),
+  );
+  return snapshot.docs.map(
+    (item) => ({ id: item.id, ...item.data() }) as StorefrontProduct,
+  );
+}
+
 export async function publishStoreProduct(
   storeId: string,
   product: StorefrontProduct,
@@ -316,6 +456,7 @@ export async function publishStoreProduct(
     await setDoc(doc(firestore, "storeProducts", product.id), {
       ...product,
       storeId,
+      searchNameLower: product.name.toLowerCase(),
     });
     return;
   }

@@ -1,15 +1,22 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { Alert, Button, CircularProgress, TextField } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import type { LoginCredentials } from '../../types';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { Alert, Button, CircularProgress, TextField } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import type { LoginCredentials } from "../../types";
+import { firebaseReady } from "../../api/firebase";
 
 const schema = yup.object({
-  email: yup.string().email('Enter a valid email').required('Email is required'),
-  password: yup.string().min(6, 'Min 6 characters').required('Password is required'),
+  email: yup
+    .string()
+    .email("Enter a valid email")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .min(6, "Min 6 characters")
+    .required("Password is required"),
 });
 
 export function LoginForm() {
@@ -23,19 +30,21 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginCredentials>({
     resolver: yupResolver(schema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (data: LoginCredentials) => {
     setServerError(null);
     try {
-      await login(data);
-      navigate('/home');
+      const role = await login(data);
+      navigate(role === "pharmacy" ? "/shop" : "/home");
     } catch (error) {
       setServerError(
         error instanceof Error
-          ? `${error.message} Use vendor@gmail.com / password123 for the demo account.`
-          : 'Unable to log in. Please try again.',
+          ? firebaseReady
+            ? error.message
+            : `${error.message} Use vendor@gmail.com / password123 for the demo account.`
+          : "Unable to log in. Please try again.",
       );
     }
   };
@@ -52,7 +61,7 @@ export function LoginForm() {
         label="Email address"
         placeholder="Email address"
         margin="normal"
-        {...register('email')}
+        {...register("email")}
         error={Boolean(errors.email)}
         helperText={errors.email?.message}
       />
@@ -62,7 +71,7 @@ export function LoginForm() {
         label="Password"
         placeholder="Password"
         margin="normal"
-        {...register('password')}
+        {...register("password")}
         error={Boolean(errors.password)}
         helperText={errors.password?.message}
       />
@@ -75,7 +84,11 @@ export function LoginForm() {
         disabled={isSubmitting}
         sx={{ mt: 3 }}
       >
-        {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Log In Now'}
+        {isSubmitting ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          "Log In Now"
+        )}
       </Button>
     </form>
   );

@@ -7,6 +7,8 @@ import pillImage from "../../assets/login-pill.svg";
 export function HomePage() {
   const [stores, setStores] = useState<PharmacyStore[]>([]);
   const [reviews, setReviews] = useState<StoreReview[]>([]);
+  const [location, setLocation] = useState("");
+  const [reviewPage, setReviewPage] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -14,7 +16,7 @@ export function HomePage() {
       .then(([storeList, reviewList]) => {
         if (!active) return;
         setStores(storeList.slice(0, 6));
-        setReviews(reviewList.slice(0, 3));
+        setReviews(reviewList);
       })
       .catch(() => {
         if (active) {
@@ -26,6 +28,13 @@ export function HomePage() {
       active = false;
     };
   }, []);
+
+  const filteredStores = stores.filter((store) =>
+    `${store.address} ${store.city}`
+      .toLowerCase()
+      .includes(location.trim().toLowerCase()),
+  );
+  const visibleReviews = reviews.slice((reviewPage - 1) * 3, reviewPage * 3);
 
   return (
     <>
@@ -58,7 +67,7 @@ export function HomePage() {
         <article className="promo-card">
           <h3>Secure delivery</h3>
           <strong>100% care</strong>
-          <Link to="/medicine-store">Read more</Link>
+          <Link to="/features">Read more</Link>
         </article>
         <article className="promo-card">
           <h3>Limited offer</h3>
@@ -72,8 +81,16 @@ export function HomePage() {
           <h2>Your Nearest Medicine Store</h2>
           <p>Search for Medicine, Filter by your location</p>
         </header>
+        <div className="customer-toolbar customer-store-search">
+          <input
+            aria-label="Filter by your location"
+            placeholder="Filter by your location"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+          />
+        </div>
         <div className="customer-store-grid">
-          {stores.map((store) => (
+          {filteredStores.map((store) => (
             <article className="customer-store-card" key={store.id}>
               <h3>{store.name}</h3>
               <p>
@@ -90,7 +107,7 @@ export function HomePage() {
               </div>
             </article>
           ))}
-          {!stores.length && (
+          {!filteredStores.length && (
             <p className="customer-empty">
               No pharmacies are available right now.
             </p>
@@ -128,8 +145,23 @@ export function HomePage() {
           <p>Search for Medicine, Filter by your location</p>
         </header>
         <div className="customer-review-grid">
-          {reviews.map((review) => (
+          {visibleReviews.map((review) => (
             <article className="customer-review-card" key={review.id}>
+              {review.userPhoto ? (
+                <img
+                  className="customer-review-card__avatar"
+                  src={review.userPhoto}
+                  alt={`${review.userName} profile`}
+                  loading="lazy"
+                />
+              ) : (
+                <span
+                  className="customer-review-card__avatar customer-review-card__avatar--fallback"
+                  aria-hidden="true"
+                >
+                  {review.userName.charAt(0).toUpperCase()}
+                </span>
+              )}
               <strong>{review.userName}</strong>
               <span aria-label={`${review.rating} out of 5 stars`}>
                 {"★".repeat(review.rating)}
@@ -144,6 +176,23 @@ export function HomePage() {
             </p>
           )}
         </div>
+        {reviews.length > 3 && (
+          <nav className="customer-pagination" aria-label="Review pages">
+            {Array.from(
+              { length: Math.ceil(reviews.length / 3) },
+              (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={reviewPage === index + 1 ? "active" : ""}
+                  onClick={() => setReviewPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              ),
+            )}
+          </nav>
+        )}
       </section>
     </>
   );

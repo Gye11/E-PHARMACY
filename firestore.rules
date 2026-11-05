@@ -35,6 +35,30 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    match /products/{productId} {
+      allow read, delete: if isPharmacy() && resource.data.ownerId == request.auth.uid;
+      allow create: if isPharmacy() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isPharmacy()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    match /suppliers/{supplierId} {
+      allow read, delete: if isPharmacy() && resource.data.ownerId == request.auth.uid;
+      allow create: if isPharmacy() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isPharmacy()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    match /customers/{customerId} {
+      allow read, delete: if isPharmacy() && resource.data.ownerId == request.auth.uid;
+      allow create: if isPharmacy() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isPharmacy()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == request.auth.uid;
+    }
+
     match /orders/{orderId} {
       allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isPharmacy());

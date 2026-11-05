@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -11,17 +11,17 @@ import {
   TableHead,
   TableRow,
   Typography,
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import EllipsisText from 'react-ellipsis-text';
-import { NameFilterBar } from '../../components/filters/NameFilterBar';
-import { SupplierFormModal } from '../../components/suppliers/SupplierFormModal';
-import { useData } from '../../context/DataContext';
-import type { Supplier } from '../../types';
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import EllipsisText from "react-ellipsis-text";
+import { NameFilterBar } from "../../components/filters/NameFilterBar";
+import { SupplierFormModal } from "../../components/suppliers/SupplierFormModal";
+import { useData } from "../../context/DataContext";
+import type { Supplier } from "../../types";
 
 export function SuppliersPage() {
   const { suppliers, addSupplier, updateSupplier } = useData();
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
 
@@ -33,7 +33,15 @@ export function SuppliersPage() {
 
   return (
     <div>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 2,
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           All Suppliers
         </Typography>
@@ -42,8 +50,11 @@ export function SuppliersPage() {
         </Button>
       </Box>
       <NameFilterBar onFilter={setFilter} />
-      <Paper elevation={0} sx={{ border: '1px solid #E8ECEA', borderRadius: 3 }}>
-        <TableContainer sx={{ overflowX: 'auto' }}>
+      <Paper
+        elevation={0}
+        sx={{ border: "1px solid #E8ECEA", borderRadius: 3 }}
+      >
+        <TableContainer sx={{ overflowX: "auto" }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -96,7 +107,11 @@ export function SuppliersPage() {
         submitLabel="Save"
         initial={editSupplier}
         onClose={() => setEditSupplier(null)}
-        onSubmit={(values) => editSupplier && updateSupplier(editSupplier.id, values)}
+        onSubmit={(values) =>
+          editSupplier
+            ? updateSupplier(editSupplier.id, values)
+            : Promise.resolve()
+        }
       />
     </div>
   );

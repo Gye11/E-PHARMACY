@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   Alert,
   Box,
@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
-import { savePharmacyStore } from "../../api/storeApi";
+import { getPharmacyStore, savePharmacyStore } from "../../api/storeApi";
 import shopImage from "../../assets/medicines/image8.jpg";
 import "./ShopPage.css";
 
@@ -25,8 +25,8 @@ interface ShopDetails {
 
 const STORAGE_KEY = "e_pharmacy_shop";
 
-function readShop(): ShopDetails | null {
-  const stored = localStorage.getItem(STORAGE_KEY);
+function readShop(userId?: string): ShopDetails | null {
+  const stored = localStorage.getItem(`${STORAGE_KEY}:${userId ?? "demo"}`);
   if (!stored) return null;
   try {
     return JSON.parse(stored) as ShopDetails;
@@ -39,7 +39,7 @@ export function ShopPage() {
   const { userEmail, userId } = useAuth();
   const [details, setDetails] = useState<ShopDetails>(
     () =>
-      readShop() ?? {
+      readShop(userId ?? undefined) ?? {
         shopName: "",
         ownerName: "",
         email: userEmail ?? "",
@@ -51,6 +51,29 @@ export function ShopPage() {
       },
   );
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    getPharmacyStore(userId)
+      .then((store) => {
+        if (!active || !store) return;
+        setDetails((current) => ({
+          ...current,
+          shopName: store.name,
+          street: store.address,
+          city: store.city,
+          phone: store.phone,
+          email: store.ownerEmail ?? current.email,
+        }));
+      })
+      .catch(() => {
+        if (active) setSaved(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   const updateField = (field: keyof ShopDetails, value: string | boolean) => {
     setDetails((current) => ({ ...current, [field]: value }));
@@ -69,7 +92,10 @@ export function ShopPage() {
         rating: 5,
         ownerEmail: details.email,
       });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(details));
+      localStorage.setItem(
+        `${STORAGE_KEY}:${userId ?? "demo"}`,
+        JSON.stringify(details),
+      );
       setSaved(true);
     } catch {
       setSaved(false);

@@ -6,7 +6,7 @@ export function CustomerLayout() {
   return (
     <div className="customer-layout">
       <header className="customer-header">
-        <Logo />
+        <Logo to="/home" />
         <nav aria-label="Main navigation">
           <NavLink to="/home">Home</NavLink>
           <NavLink to="/medicine-store">Medicine store</NavLink>
@@ -31,7 +31,7 @@ export function CustomerLayout() {
       <footer className="customer-footer">
         <div className="customer-footer__top">
           <div>
-            <Logo />
+            <Logo to="/home" />
             <p>
               Get the medicine to help you feel better, get back to your active
               life, and enjoy every moment.

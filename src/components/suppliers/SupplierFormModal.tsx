@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import {
   Button,
+  Alert,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,11 +12,11 @@ import {
   IconButton,
   MenuItem,
   TextField,
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import CloseIcon from '@mui/icons-material/Close';
-import dayjs, { type Dayjs } from 'dayjs';
-import type { Supplier } from '../../types';
+} from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import CloseIcon from "@mui/icons-material/Close";
+import dayjs, { type Dayjs } from "dayjs";
+import type { Supplier } from "../../types";
 
 export type SupplierFormValues = {
   name: string;
@@ -23,16 +24,16 @@ export type SupplierFormValues = {
   company: string;
   deliveryDate: Dayjs;
   amount: number;
-  status: Supplier['status'];
+  status: Supplier["status"];
 };
 
 const schema = yup.object({
-  name: yup.string().required('Supplier name is required'),
-  address: yup.string().required('Address is required'),
-  company: yup.string().required('Company is required'),
-  deliveryDate: yup.mixed<Dayjs>().required('Delivery date is required'),
-  amount: yup.number().typeError('Amount must be a number').min(0).required(),
-  status: yup.string().oneOf(['Active', 'Inactive', 'Pending']).required(),
+  name: yup.string().required("Supplier name is required"),
+  address: yup.string().required("Address is required"),
+  company: yup.string().required("Company is required"),
+  deliveryDate: yup.mixed<Dayjs>().required("Delivery date is required"),
+  amount: yup.number().typeError("Amount must be a number").min(0).required(),
+  status: yup.string().oneOf(["Active", "Inactive", "Pending"]).required(),
 });
 
 interface SupplierFormModalProps {
@@ -41,7 +42,7 @@ interface SupplierFormModalProps {
   submitLabel: string;
   initial?: Supplier | null;
   onClose: () => void;
-  onSubmit: (values: Omit<Supplier, 'id'>) => void;
+  onSubmit: (values: Omit<Supplier, "id">) => void | Promise<void>;
 }
 
 export function SupplierFormModal({
@@ -61,17 +62,19 @@ export function SupplierFormModal({
   } = useForm<SupplierFormValues>({
     resolver: yupResolver(schema),
     defaultValues: {
-      name: '',
-      address: '',
-      company: '',
+      name: "",
+      address: "",
+      company: "",
       deliveryDate: dayjs(),
       amount: 0,
-      status: 'Active',
+      status: "Active",
     },
   });
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (open) {
+      setSaveError("");
       reset(
         initial
           ? {
@@ -83,12 +86,12 @@ export function SupplierFormModal({
               status: initial.status,
             }
           : {
-              name: '',
-              address: '',
-              company: '',
+              name: "",
+              address: "",
+              company: "",
               deliveryDate: dayjs(),
               amount: 0,
-              status: 'Active',
+              status: "Active",
             },
       );
     }
@@ -98,39 +101,50 @@ export function SupplierFormModal({
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ pr: 6 }}>
         {title}
-        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 12, top: 12 }}>
+        <IconButton
+          onClick={onClose}
+          sx={{ position: "absolute", right: 12, top: 12 }}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       <form
-        onSubmit={handleSubmit((values) => {
-          onSubmit({
-            name: values.name,
-            address: values.address,
-            company: values.company,
-            deliveryDate: values.deliveryDate.format('YYYY-MM-DD'),
-            amount: values.amount,
-            status: values.status,
-          });
-          onClose();
+        onSubmit={handleSubmit(async (values) => {
+          setSaveError("");
+          try {
+            await onSubmit({
+              name: values.name,
+              address: values.address,
+              company: values.company,
+              deliveryDate: values.deliveryDate.format("YYYY-MM-DD"),
+              amount: values.amount,
+              status: values.status,
+            });
+            onClose();
+          } catch {
+            setSaveError(
+              "Could not save supplier. Check Firebase access and try again.",
+            );
+          }
         })}
       >
-        <DialogContent sx={{ display: 'grid', gap: 2 }}>
+        <DialogContent sx={{ display: "grid", gap: 2 }}>
+          {saveError && <Alert severity="error">{saveError}</Alert>}
           <TextField
             label="Suppliers Info"
-            {...register('name')}
+            {...register("name")}
             error={Boolean(errors.name)}
             helperText={errors.name?.message}
           />
           <TextField
             label="Address"
-            {...register('address')}
+            {...register("address")}
             error={Boolean(errors.address)}
             helperText={errors.address?.message}
           />
           <TextField
             label="Company"
-            {...register('company')}
+            {...register("company")}
             error={Boolean(errors.company)}
             helperText={errors.company?.message}
           />
@@ -154,7 +168,7 @@ export function SupplierFormModal({
           <TextField
             label="Ammount"
             type="number"
-            {...register('amount')}
+            {...register("amount")}
             error={Boolean(errors.amount)}
             helperText={errors.amount?.message}
           />

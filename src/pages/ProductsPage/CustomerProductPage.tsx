@@ -9,6 +9,7 @@ import {
   type StorefrontProduct,
 } from "../../api/storeApi";
 import { useAuth } from "../../context/AuthContext";
+import { AuthPromptDialog } from "../../components/common/AuthPromptDialog";
 
 export function CustomerProductPage() {
   const { productId } = useParams();
@@ -16,8 +17,10 @@ export function CustomerProductPage() {
   const [product, setProduct] = useState<StorefrontProduct>();
   const [reviews, setReviews] = useState<StoreReview[]>([]);
   const [tab, setTab] = useState<"description" | "reviews">("description");
+  const [reviewPage, setReviewPage] = useState(1);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   useEffect(() => {
     let active = true;
     Promise.all([getStorefrontProducts(), getReviews(productId)])
@@ -33,27 +36,30 @@ export function CustomerProductPage() {
   }, [productId]);
   if (!productId) return <Navigate to="/medicine" replace />;
   if (!product) return <p className="customer-empty">Loading product…</p>;
+  const visibleReviews = reviews.slice((reviewPage - 1) * 5, reviewPage * 5);
 
   const add = async () => {
     if (!isAuthenticated || role !== "customer") {
-      setMessage(
-        "Please log in or register with a customer account to add products to cart.",
-      );
+      setAuthPromptOpen(true);
       return;
     }
-    const cart = await getCart(userId ?? undefined);
-    const found = cart.find((item) => item.productId === product.id);
-    await saveCart(
-      found
-        ? cart.map((item) =>
-            item.productId === product.id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item,
-          )
-        : [...cart, { productId: product.id, quantity }],
-      userId ?? undefined,
-    );
-    setMessage("Added to cart.");
+    try {
+      const cart = await getCart(userId ?? undefined);
+      const found = cart.find((item) => item.productId === product.id);
+      await saveCart(
+        found
+          ? cart.map((item) =>
+              item.productId === product.id
+                ? { ...item, quantity: item.quantity + quantity }
+                : item,
+            )
+          : [...cart, { productId: product.id, quantity }],
+        userId ?? undefined,
+      );
+      setMessage("Added to cart.");
+    } catch {
+      setMessage("Could not update your cart. Please try again.");
+    }
   };
   return (
     <>
@@ -96,13 +102,7 @@ export function CustomerProductPage() {
           </p>
           {message && (
             <p className="customer-success" role="status">
-              {message}{" "}
-              {!isAuthenticated && (
-                <>
-                  <Link to="/login">Log in</Link> ·{" "}
-                  <Link to="/register">Register</Link>
-                </>
-              )}
+              {message}
             </p>
           )}
         </section>
@@ -136,21 +136,47 @@ export function CustomerProductPage() {
               </p>
             </div>
           ) : reviews.length ? (
-            reviews.map((review) => (
-              <article className="customer-review-card" key={review.id}>
-                <strong>{review.userName}</strong> · {review.createdAt}
-                <p>
-                  {"★".repeat(review.rating)}
-                  {"☆".repeat(5 - review.rating)}
-                </p>
-                <p>{review.text}</p>
-              </article>
-            ))
+            <>
+              {visibleReviews.map((review) => (
+                <article className="customer-review-card" key={review.id}>
+                  <strong>{review.userName}</strong> · {review.createdAt}
+                  <p>
+                    {"★".repeat(review.rating)}
+                    {"☆".repeat(5 - review.rating)}
+                  </p>
+                  <p>{review.text}</p>
+                </article>
+              ))}
+              {reviews.length > 5 && (
+                <nav
+                  className="customer-pagination"
+                  aria-label="Product review pages"
+                >
+                  {Array.from(
+                    { length: Math.ceil(reviews.length / 5) },
+                    (_, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className={reviewPage === index + 1 ? "active" : ""}
+                        onClick={() => setReviewPage(index + 1)}
+                      >
+                        {index + 1}
+                      </button>
+                    ),
+                  )}
+                </nav>
+              )}
+            </>
           ) : (
             <p>No reviews yet.</p>
           )}
         </section>
       </div>
+      <AuthPromptDialog
+        open={authPromptOpen}
+        onClose={() => setAuthPromptOpen(false)}
+      />
     </>
   );
 }

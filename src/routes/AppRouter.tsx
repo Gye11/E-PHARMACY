@@ -15,6 +15,11 @@ const HomePage = lazy(() =>
     default: module.HomePage,
   })),
 );
+const FeaturesPage = lazy(() =>
+  import("../pages/HomePage/FeaturesPage").then((module) => ({
+    default: module.FeaturesPage,
+  })),
+);
 const ShopPage = lazy(() =>
   import("../pages/ShopPage/ShopPage").then((module) => ({
     default: module.ShopPage,
@@ -99,6 +104,7 @@ export function AppRouter() {
           <Route path="/register" element={<LoginRoute mode="register" />} />
           <Route element={<CustomerLayout />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/features" element={<FeaturesPage />} />
             <Route path="/medicine-store" element={<MedicineStorePage />} />
             <Route
               path="/medicine-store/:storeId"

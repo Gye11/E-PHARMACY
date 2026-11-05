@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Alert,
@@ -15,7 +15,11 @@ import {
   type NewMedicineValues,
 } from "../../components/products/AddMedicineModal";
 import { useData } from "../../context/DataContext";
-import { publishStoreProduct, removeStoreProduct } from "../../api/storeApi";
+import {
+  getPublishedProducts,
+  publishStoreProduct,
+  removeStoreProduct,
+} from "../../api/storeApi";
 import { useAuth } from "../../context/AuthContext";
 import "./ProductsPage.css";
 
@@ -36,8 +40,10 @@ interface SavedShop {
   phone?: string;
 }
 
-function readStoreMedicines(): string[] {
-  const stored = localStorage.getItem(STORE_MEDICINES_KEY);
+function readStoreMedicines(userId?: string): string[] {
+  const stored = localStorage.getItem(
+    `${STORE_MEDICINES_KEY}:${userId ?? "demo"}`,
+  );
   if (!stored) return [];
   try {
     const parsed: unknown = JSON.parse(stored);
@@ -50,8 +56,10 @@ function readStoreMedicines(): string[] {
   }
 }
 
-function readShopDetails(): SavedShop {
-  const stored = localStorage.getItem(SHOP_DETAILS_KEY);
+function readShopDetails(userId?: string): SavedShop {
+  const stored = localStorage.getItem(
+    `${SHOP_DETAILS_KEY}:${userId ?? "demo"}`,
+  );
   if (!stored) return {};
   try {
     const parsed: unknown = JSON.parse(stored);
@@ -70,8 +78,40 @@ export function ProductsPage() {
     useState<(typeof categories)[number]>("All categories");
   const [activeTab, setActiveTab] = useState<"store" | "all">("all");
   const [addOpen, setAddOpen] = useState(false);
-  const [storeMedicines, setStoreMedicines] = useState(readStoreMedicines);
+  const [storeMedicines, setStoreMedicines] = useState(() =>
+    readStoreMedicines(userId ?? undefined),
+  );
+  const [publishedProducts, setPublishedProducts] = useState<
+    Awaited<ReturnType<typeof getPublishedProducts>>
+  >([]);
+  const [actionError, setActionError] = useState("");
   const addMedicineButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    getPublishedProducts(userId)
+      .then((published) => {
+        if (!active) return;
+        setPublishedProducts(published);
+        const catalogIds = published.map((item) =>
+          item.id.startsWith(`${userId}-`)
+            ? item.id.slice(userId.length + 1)
+            : item.id,
+        );
+        localStorage.setItem(
+          `${STORE_MEDICINES_KEY}:${userId}`,
+          JSON.stringify(catalogIds),
+        );
+        setStoreMedicines(catalogIds);
+      })
+      .catch(() => {
+        if (active) setStoreMedicines(readStoreMedicines(userId));
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   const medicines = useMemo(
     () => [
@@ -88,8 +128,25 @@ export function ProductsPage() {
           image: product.image,
           price: product.price,
         })),
+      ...publishedProducts
+        .filter(
+          (product) =>
+            !MEDICINE_CATALOG.some((medicine) => medicine.id === product.id),
+        )
+        .map((product) => ({
+          id: product.id.startsWith(`${userId}-`)
+            ? product.id.slice(userId!.length + 1)
+            : product.id,
+          name: product.name,
+          description: product.description,
+          image: product.image,
+          price: product.price,
+        }))
+        .filter(
+          (product) => !products.some((entry) => entry.id === product.id),
+        ),
     ],
-    [products],
+    [products, publishedProducts, userId],
   );
 
   const filtered = useMemo(
@@ -118,48 +175,74 @@ export function ProductsPage() {
     const next = storeMedicines.includes(id)
       ? storeMedicines.filter((medicineId) => medicineId !== id)
       : [...storeMedicines, id];
-    localStorage.setItem(STORE_MEDICINES_KEY, JSON.stringify(next));
-    setStoreMedicines(next);
-    if (next.includes(id)) {
-      const medicine = medicines.find((item) => item.id === id);
-      if (medicine) {
-        await publishStoreProduct(userId ?? "demo-pharmacy", {
-          ...medicine,
-          id: `${userId ?? "demo-pharmacy"}-${medicine.id}`,
-          category: "Medicine",
-          stock: 100,
-          suppliers: "E-Pharmacy",
-          createdAt: new Date().toISOString(),
-          discountPercent: 0,
-        });
+    setActionError("");
+    try {
+      if (next.includes(id)) {
+        const medicine = medicines.find((item) => item.id === id);
+        if (medicine) {
+          await publishStoreProduct(userId ?? "demo-pharmacy", {
+            ...medicine,
+            id: `${userId ?? "demo-pharmacy"}-${medicine.id}`,
+            category: "Medicine",
+            stock: 100,
+            suppliers: "E-Pharmacy",
+            createdAt: new Date().toISOString(),
+            discountPercent: 0,
+          });
+        }
+      } else {
+        await removeStoreProduct(`${userId ?? "demo-pharmacy"}-${id}`);
       }
-    } else {
-      await removeStoreProduct(`${userId ?? "demo-pharmacy"}-${id}`);
+      localStorage.setItem(
+        `${STORE_MEDICINES_KEY}:${userId ?? "demo"}`,
+        JSON.stringify(next),
+      );
+      setStoreMedicines(next);
+      setPublishedProducts(
+        await getPublishedProducts(userId ?? "demo-pharmacy"),
+      );
+    } catch {
+      setActionError(
+        "The medicine could not be updated. Check your Firebase permissions and try again.",
+      );
     }
   };
 
   const handleAddMedicine = async (values: NewMedicineValues) => {
-    const id = addProduct({
-      ...values,
-      category: "Medicine",
-      stock: 0,
-      suppliers: "Your shop",
-    });
-    const next = [...storeMedicines, id];
-    localStorage.setItem(STORE_MEDICINES_KEY, JSON.stringify(next));
-    setStoreMedicines(next);
-    await publishStoreProduct(userId ?? "demo-pharmacy", {
-      id: `${userId ?? "demo-pharmacy"}-${id}`,
-      ...values,
-      category: "Medicine",
-      stock: 0,
-      suppliers: "Your shop",
-      createdAt: new Date().toISOString(),
-      discountPercent: 0,
-    });
+    try {
+      const id = await addProduct({
+        ...values,
+        category: "Medicine",
+        stock: 0,
+        suppliers: "Your shop",
+      });
+      const next = [...storeMedicines, id];
+      await publishStoreProduct(userId ?? "demo-pharmacy", {
+        id: `${userId ?? "demo-pharmacy"}-${id}`,
+        ...values,
+        category: "Medicine",
+        stock: 0,
+        suppliers: "Your shop",
+        createdAt: new Date().toISOString(),
+        discountPercent: 0,
+      });
+      localStorage.setItem(
+        `${STORE_MEDICINES_KEY}:${userId ?? "demo"}`,
+        JSON.stringify(next),
+      );
+      setStoreMedicines(next);
+      setPublishedProducts(
+        await getPublishedProducts(userId ?? "demo-pharmacy"),
+      );
+      setActionError("");
+    } catch {
+      setActionError(
+        "The medicine could not be saved. Check your Firebase permissions and try again.",
+      );
+    }
   };
 
-  const shop = readShopDetails();
+  const shop = readShopDetails(userId ?? undefined);
   const shopLocation = [shop.street, shop.city].filter(Boolean).join(", ");
 
   return (
@@ -192,6 +275,11 @@ export function ProductsPage() {
           + Add medicine
         </Button>
       </Box>
+      {actionError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {actionError}
+        </Alert>
+      )}
 
       <div
         className="medicine-page__tabs"

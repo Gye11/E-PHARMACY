@@ -19,7 +19,7 @@ interface AuthContextValue {
   userEmail: string | null;
   userId: string | null;
   role: "customer" | "pharmacy";
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<"customer" | "pharmacy">;
   register: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -77,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(result.token);
     setUserEmail(result.email);
     setRole(result.role);
+    return result.role;
   }, []);
 
   const register = useCallback(async (credentials: LoginCredentials) => {
@@ -96,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(ROLE_KEY);
     setToken(null);
     setUserEmail(null);
+    setRole("customer");
   }, []);
 
   const value = useMemo(
