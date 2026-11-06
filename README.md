@@ -11,6 +11,7 @@ Responsive pharmacy platform with two experiences: a public customer storefront 
 
 ## Design and requirements
 
+- Live demo: https://gye11.github.io/E-PHARMACY/
 - Figma: https://www.figma.com/design/Y63xRRr90KDcrpYTznH2yf/E-PHARMACY--franchise-?node-id=0-1
 - Technical specification: project brief supplied with this repository/task.
 
