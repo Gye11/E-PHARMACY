@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-dashboard" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M4 4h7v9H4V4zm9 0h7v5h-7V4zM4 15h7v5H4v-5zm9 3h7v2h-7v-2z"/>
+  </symbol>
+  <symbol id="icon-orders" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M7 4h10l1 3h3v2H3V7h3l1-3zm-1 8h12v8H6v-8z"/>
+  </symbol>
+  <symbol id="icon-products" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12 2L2 7l10 5 10-5-10-5zm0 8.5L4.5 7.5 12 5l7.5 2.5L12 10.5zM2 17l10 5 10-5v-2L12 20 2 15v2z"/>
+  </symbol>
+  <symbol id="icon-customers" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 8a7 7 0 0 1 14 0H5z"/>
+  </symbol>
+  <symbol id="icon-suppliers" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M3 8h8V3H3v5zm0 13h8v-5H3v5zm10 0h8V11h-8v10zM13 3v5h8V3h-8z"/>
+  </symbol>
+  <symbol id="icon-package" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12 2 3 7v10l9 5 9-5V7l-9-5zm0 2.2 6.5 3.6L12 11.4 5.5 7.8 12 4.2zM5 9.3l7 3.9 7-3.9V16l-7 3.9L5 16V9.3z"/>
+  </symbol>
+  <symbol id="icon-filter" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M4 5h16v2l-6 7v5l-4-2v-3L4 7V5z"/>
+  </symbol>
+  <symbol id="icon-logout" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3zm4.8 4.2-1.4 1.4L15.2 11H3v2h12.2l-1.8 1.8 1.4 1.4L20 12l-5.2-4.8z"/>
+  </symbol>
+</svg>

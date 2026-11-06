@@ -1,0 +1,1 @@
+.dashboard-page__tables{display:grid;gap:24px}@media(min-width:768px){.dashboard-page__tables{grid-template-columns:1fr 1fr;align-items:start}}@media(min-width:1440px){.dashboard-page__tables{gap:32px}}
