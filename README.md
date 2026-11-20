@@ -40,7 +40,9 @@ Public sign-up creates customer accounts only. To grant franchise access, assign
 ## Build and deploy
 
 - `npm run build` creates the production site in `dist/`.
-- `npm run deploy` publishes to the GitHub Pages branch (configure the repository's Pages source and ensure the `base` value in `vite.config.ts` matches the repository name).
+- Every push to `main` builds the Vite site and deploys the compiled `dist/` output via `.github/workflows/deploy-pages.yml`.
+- In GitHub repository Settings → Pages, set Build and deployment → Source to **GitHub Actions**. Do not select `main / (root)`, because its `index.html` is the Vite development entry point.
+- `npm run deploy` is also available for manual deployment to the `gh-pages` branch when Pages is configured to publish that branch.
 - The Vite configuration writes a `404.html` fallback for client-side routes.
 
-Deployment is not automatic: configure the hosting repository/project and verify the live URL after publishing.
+Live URL: https://gye11.github.io/E-PHARMACY/
